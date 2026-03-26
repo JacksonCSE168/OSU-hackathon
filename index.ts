@@ -12,9 +12,7 @@ const sql = postgres(process.env.DATABASE_URL!, {
 });
 
 async function initDB() {
-  await sql`DROP TABLE IF EXISTS profile_tags CASCADE`;
-  await sql`DROP TABLE IF EXISTS photos CASCADE`;
-  await sql`DROP TABLE IF EXISTS profiles CASCADE`;
+  
   
   await sql`
     CREATE TABLE IF NOT EXISTS profiles (
