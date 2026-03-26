@@ -18,7 +18,7 @@
   font-family: "Inter", system-ui, sans-serif;
 }
 
-html, body { height: 100%; background: var(--bg); color: var(--text); }
+html, body { height: 100%; background: var(--bg); color: var(--text); overflow-x: hidden; }
 
 /* ─── Header ────────────────────────────────────────────────────── */
 .header {
@@ -63,12 +63,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 .btn-primary:hover {
   background: var(--blue-light);
   box-shadow: 0 0 16px var(--blue-glow);
 }
+.btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ─── Honeycomb grid ────────────────────────────────────────────── */
@@ -84,17 +85,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
 .hive-row {
   display: flex;
   justify-content: center;
-  /* 正确的蜂窝间距：行中心距 = hex高度 × 0.75，所以负margin = hex高度 × 0.25 */
   margin-top: calc(var(--hex-h) * -0.25);
 }
 .hive-row:first-child { margin-top: 0; }
 
-/* 4格居中后天然与5格居中错开半格，无需额外偏移 */
-
 /* ─── Hex cell ──────────────────────────────────────────────────── */
 .hex-wrap {
   position: relative;
-  /* 固定尺寸只包含hex本身，不包含文字，保证蜂窝几何正确 */
   width: var(--hex-size);
   height: var(--hex-h);
   margin: 0 calc(var(--hex-gap) / 2);
@@ -108,13 +105,15 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   overflow: hidden;
   background: var(--surface2);
-  transition: transform 0.22s ease, filter 0.22s ease;
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.22s ease;
   position: relative;
+  z-index: 1;
 }
 
 .hex-wrap:hover .hex {
-  transform: scale(1.08);
-  filter: brightness(1.15) drop-shadow(0 0 12px var(--blue-glow));
+  transform: scale(1.1) translateY(-5px);
+  filter: brightness(1.1) drop-shadow(0 0 15px var(--blue-glow));
+  z-index: 10;
 }
 
 .hex img {
@@ -136,7 +135,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
 }
 
 .hex-name {
-  /* absolute overlay，居中显示在hex上，hover时出现 */
   position: absolute;
   bottom: 18%;
   left: 0;
@@ -145,19 +143,18 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
   font-size: 0.72rem;
   font-weight: 600;
   color: #fff;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 3px 6px;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 4px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
-  z-index: 5;
+  z-index: 15;
 }
 .hex-wrap:hover .hex-name { opacity: 1; }
 
-/* Add-new hex */
 .hex-add .hex {
   background: transparent;
   border: 2px dashed rgba(24, 119, 242, 0.35);
@@ -168,238 +165,161 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
   font-size: 2.5rem;
   color: rgba(24, 119, 242, 0.5);
 }
-.hex-add:hover .hex {
-  border-color: var(--blue);
-  filter: drop-shadow(0 0 10px var(--blue-glow));
-}
-.hex-add:hover .hex-initial { color: var(--blue-light); }
 
 /* ─── Modal ─────────────────────────────────────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 8, 18, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 8, 18, 0.85);
+  backdrop-filter: blur(12px);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .modal {
   position: relative;
   background: var(--surface);
   border: 1px solid rgba(24, 119, 242, 0.2);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(24,119,242,0.08);
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 
-.modal h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 24px;
-  background: linear-gradient(90deg, var(--blue-light), var(--cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* ─── 🌟 Soul Map (灵魂坐标选择器) ─────────────────────────────── */
+.soul-map {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  border: 1px solid rgba(24, 119, 242, 0.2);
+  border-radius: 12px;
+  position: relative;
+  cursor: crosshair;
+  margin: 12px 0 20px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
 }
 
-.modal-close {
+.soul-map::before {
+  content: "";
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 1.4rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: color 0.2s, background 0.2s;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(24, 119, 242, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 119, 242, 0.05) 1px, transparent 1px);
+  background-size: 25px 25px;
 }
-.modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 
-/* Avatar picker in modal */
+.soul-marker {
+  width: 14px;
+  height: 14px;
+  background: var(--blue-light);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 20px var(--blue-light), 0 0 40px var(--blue-glow);
+  pointer-events: none;
+  z-index: 5;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.map-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* ─── Form Elements ─────────────────────────────────────────────── */
+.field {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+.field:focus { border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1); }
+
 .avatar-picker {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .avatar-hex-preview {
-  width: 100px;
-  height: 115px;
+  width: 110px;
+  height: 125px;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   background: var(--surface2);
   overflow: hidden;
   cursor: pointer;
-  transition: filter 0.2s;
+  transition: transform 0.2s;
+  border: 2px solid transparent;
 }
-.avatar-hex-preview:hover { filter: brightness(1.2); }
+.avatar-hex-preview:hover { transform: scale(1.05); filter: brightness(1.2); }
 .avatar-hex-preview img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-hex-preview .hex-initial { font-size: 2rem; background: linear-gradient(135deg, #1a2a5e, #0d1a3a); }
 
-.avatar-hint { font-size: 0.78rem; color: var(--text-dim); }
-
-/* Form fields */
-.field {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 0.95rem;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s;
-  margin-bottom: 14px;
-}
-.field:focus { border-color: var(--blue); }
-.field::placeholder { color: var(--text-dim); }
-
-/* ─── Profile page ──────────────────────────────────────────────── */
-.profile-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 24px 32px;
-  gap: 12px;
-}
-
-.profile-hex-lg {
-  width: 160px;
-  height: 185px;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: var(--surface2);
-  overflow: hidden;
-  box-shadow: 0 0 40px var(--blue-glow);
-}
-.profile-hex-lg img { width: 100%; height: 100%; object-fit: cover; }
-.profile-hex-lg .hex-initial { font-size: 3rem; background: linear-gradient(135deg, #1a2a5e, #0d1a3a); }
-
-.profile-name {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.photo-count { color: var(--text-dim); font-size: 0.9rem; }
-
-/* ─── Photo grid ────────────────────────────────────────────────── */
+/* ─── Photo Grid & Others ───────────────────────────────────────── */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
   padding: 0 32px 80px;
   max-width: 1200px;
   margin: 0 auto;
-  width: 100%;
 }
 
 .photo-card {
   background: var(--surface);
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.photo-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-.photo-card img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  display: block;
-}
-.photo-caption {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-}
-
-/* ─── Upload area ───────────────────────────────────────────────── */
-.upload-zone {
-  width: 100%;
-  min-height: 140px;
-  border: 2px dashed rgba(24, 119, 242, 0.3);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin-bottom: 14px;
-  transition: border-color 0.2s, background 0.2s;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
-.upload-zone:hover {
-  border-color: var(--blue);
-  background: rgba(24, 119, 242, 0.05);
-}
-.upload-zone-hint {
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 20px;
-}
-.upload-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  width: 100%;
-}
-.upload-preview-grid img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
+.photo-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
 
-/* ─── Lightbox ──────────────────────────────────────────────────── */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 8, 18, 0.95);
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.photo-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 20px;
-}
-.lightbox img {
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 0 80px rgba(0,0,0,0.8);
-}
-.lightbox p {
-  margin-top: 16px;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-
-/* ─── Empty state ───────────────────────────────────────────────── */
-.empty {
-  text-align: center;
-  padding: 80px 24px;
-  color: var(--text-dim);
-}
-.empty h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-.empty p { font-size: 0.9rem; }
-
-.loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  color: var(--text-dim);
 }
+.modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+/* Scrollbar 美化 */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
