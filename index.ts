@@ -7,12 +7,10 @@ try { mkdirSync("./uploads", { recursive: true }); } catch (e) {}
 import indexHtml from "./index.html";
 import profileHtml from "./profile.html";
 
-// 🌟 连接到 Render 的 Postgres 数据库
 const sql = postgres(process.env.DATABASE_URL!, {
   ssl: "require",
 });
 
-// 🌟 初始化表
 async function initDB() {
   await sql`DROP TABLE IF EXISTS profile_tags CASCADE`;
   await sql`DROP TABLE IF EXISTS photos CASCADE`;
@@ -58,7 +56,6 @@ async function getProfilesWithTags(rows: any[]) {
   );
 }
 
-// 🌟 包装启动逻辑
 async function startServer() {
   await initDB();
   console.log("✅ 数据库表初始化完成");
@@ -120,27 +117,3 @@ async function startServer() {
             const all = await sql`SELECT * FROM profiles ORDER BY created_at DESC`;
             return Response.json(await getProfilesWithTags(all));
           }
-
-          try {
-            const profiles = await sql`
-              SELECT DISTINCT p.* FROM profiles p
-              JOIN profile_tags pt ON p.id = pt.profile_id
-              WHERE pt.tag = ${tag}
-              ORDER BY p.created_at DESC
-            `;
-            return Response.json(await getProfilesWithTags(profiles));
-          } catch (err) {
-            console.error("搜索报错:", err);
-            return Response.json([]);
-          }
-        }
-      },
-
-      "/api/profiles/nearby": {
-        GET: async (req) => {
-          try {
-            const url = new URL(req.url);
-            const targetX = parseFloat(url.searchParams.get("x") || "50");
-            const targetY = parseFloat(url.searchParams.get("y") || "50");
-
-            const allProfiles = await sql`SELECT * FROM
