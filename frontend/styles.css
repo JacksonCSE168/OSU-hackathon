@@ -390,3 +390,31 @@ html, body { height: 100%; background: var(--bg); color: var(--text); overflow-x
   0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--cyan); }
   50% { opacity: 0.4; }
 }
+@media (max-width: 768px) {
+  :root {
+    /* 在小屏幕上按比例缩小六边形，防止撑爆屏幕 */
+    --hex-size: 85px;
+    --hex-h: 98px;
+    --hex-gap: 4px;
+  }
+  
+  .header {
+    padding: 0 16px;
+  }
+  
+  .hive {
+    padding: 32px 12px 60px;
+  }
+
+  /* 调整大号头像的比例 */
+  .profile-hex-lg {
+    width: 120px;
+    height: 138px;
+  }
+  
+  /* 调整弹窗在手机上的边距 */
+  .modal {
+    padding: 24px;
+    width: 90%;
+  }
+}
