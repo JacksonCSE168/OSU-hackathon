@@ -1,0 +1,453 @@
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080c18;
+  --surface: #10162a;
+  --surface2: #161e36;
+  --blue: #1877f2;
+  --blue-light: #4299ff;
+  --blue-glow: rgba(24, 119, 242, 0.35);
+  --cyan: #00cfff;
+  --cyan-glow: rgba(0, 207, 255, 0.25);
+  --text: #e8edf8;
+  --text-dim: #7a8aaa;
+  --hex-size: 130px;
+  --hex-h: 150px;
+  --hex-gap: 6px;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+/* ─── Header ────────────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  background: rgba(8, 12, 24, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(24, 119, 242, 0.15);
+}
+
+.logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--blue-light), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.back-btn {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.back-btn:hover { color: var(--text); }
+
+/* ─── Buttons ───────────────────────────────────────────────────── */
+.btn-primary {
+  padding: 8px 20px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: var(--blue-light);
+  box-shadow: 0 0 16px var(--blue-glow);
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger {
+  padding: 8px 16px;
+  background: transparent;
+  color: #ff4d4f;
+  border: 1px solid rgba(255,77,79,0.5);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-danger:hover { background: rgba(255,77,79,0.12); border-color: #ff4d4f; }
+
+/* ─── Photo delete button ──────────────────────────────────────── */
+.photo-card { position: relative; }
+.photo-delete-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 26px; height: 26px;
+  background: rgba(0,0,0,0.65);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.photo-card:hover .photo-delete-btn { display: flex; }
+.photo-delete-btn:hover { background: #ff4d4f; }
+
+/* ─── Honeycomb grid ────────────────────────────────────────────── */
+.hive {
+  padding: 48px 24px 80px;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.hive-row {
+  display: flex;
+  justify-content: center;
+  margin-top: calc(var(--hex-h) * -0.25);
+}
+.hive-row:first-child { margin-top: 0; }
+
+/* ─── Hex cell ──────────────────────────────────────────────────── */
+.hex-wrap {
+  position: relative;
+  width: var(--hex-size);
+  height: var(--hex-h);
+  margin: 0 calc(var(--hex-gap) / 2);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.hex {
+  width: var(--hex-size);
+  height: var(--hex-h);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  overflow: hidden;
+  background: var(--surface2);
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.22s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.hex-wrap:hover .hex {
+  transform: scale(1.1) translateY(-5px);
+  filter: brightness(1.1) drop-shadow(0 0 15px var(--blue-glow));
+  z-index: 10;
+}
+
+.hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hex-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a2a5e, #0d1a3a);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--blue-light);
+}
+
+.hex-name {
+  position: absolute;
+  bottom: 18%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 15;
+}
+.hex-wrap:hover .hex-name { opacity: 1; }
+
+.hex-add .hex {
+  background: transparent;
+  border: 2px dashed rgba(24, 119, 242, 0.35);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.hex-add .hex-initial {
+  background: transparent;
+  font-size: 2.5rem;
+  color: rgba(24, 119, 242, 0.5);
+}
+
+/* ─── Modal ─────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid rgba(24, 119, 242, 0.2);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── 🌟 Soul Map (灵魂坐标选择器) ─────────────────────────────── */
+.soul-map {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  border: 1px solid rgba(24, 119, 242, 0.2);
+  border-radius: 12px;
+  position: relative;
+  cursor: crosshair;
+  margin: 12px 0 20px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.soul-map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(24, 119, 242, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 119, 242, 0.05) 1px, transparent 1px);
+  background-size: 25px 25px;
+}
+
+.soul-marker {
+  width: 14px;
+  height: 14px;
+  background: var(--blue-light);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 20px var(--blue-light), 0 0 40px var(--blue-glow);
+  pointer-events: none;
+  z-index: 5;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.map-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* ─── Form Elements ─────────────────────────────────────────────── */
+.field {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+.field:focus { border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1); }
+
+.avatar-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.avatar-hex-preview {
+  width: 110px;
+  height: 125px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: var(--surface2);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 2px solid transparent;
+}
+.avatar-hex-preview:hover { transform: scale(1.05); filter: brightness(1.2); }
+.avatar-hex-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ─── Photo Grid & Others ───────────────────────────────────────── */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 0 32px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.photo-card {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.photo-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+
+.photo-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+/* Scrollbar 美化 */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ─── 🌟 灵魂雷达扫描动画 ─────────────────────────────────────── */
+.radar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+}
+
+.radar-screen {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 2px solid var(--blue-glow);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px var(--blue-glow), inset 0 0 40px var(--blue-glow);
+  margin-bottom: 24px;
+}
+
+/* 雷达十字准星 */
+.radar-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(0, 207, 255, 0.4) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(0, 207, 255, 0.4) 50%, transparent 51%);
+  border-radius: 50%;
+}
+
+/* 旋转的扫描扇形 */
+.radar-sweep {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  background: linear-gradient(45deg, rgba(0, 207, 255, 0.8) 0%, transparent 60%);
+  transform-origin: 0% 100%;
+  animation: scan 1.2s linear infinite;
+}
+
+@keyframes scan {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 闪烁的提示文字 */
+.radar-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  animation: pulse-text 1s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--cyan); }
+  50% { opacity: 0.4; }
+}
+@media (max-width: 768px) {
+  :root {
+    /* 在小屏幕上按比例缩小六边形，防止撑爆屏幕 */
+    --hex-size: 85px;
+    --hex-h: 98px;
+    --hex-gap: 4px;
+  }
+  
+  .header {
+    padding: 0 16px;
+  }
+  
+  .hive {
+    padding: 32px 12px 60px;
+  }
+
+  /* 调整大号头像的比例 */
+  .profile-hex-lg {
+    width: 120px;
+    height: 138px;
+  }
+  
+  /* 调整弹窗在手机上的边距 */
+  .modal {
+    padding: 24px;
+    width: 90%;
+  }
+}
