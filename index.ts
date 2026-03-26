@@ -14,6 +14,11 @@ const sql = postgres(process.env.DATABASE_URL!, {
 
 // 🌟 初始化表 (使用 Postgres 语法)
 async function initDB() {
+
+  await sql`DROP TABLE IF EXISTS profile_tags CASCADE`;
+  await sql`DROP TABLE IF EXISTS photos CASCADE`;
+  await sql`DROP TABLE IF EXISTS profiles CASCADE`;
+  
   // 个人资料表：加入了 x, y 坐标
   await sql`
     CREATE TABLE IF NOT EXISTS profiles (
