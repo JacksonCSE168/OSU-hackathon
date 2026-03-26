@@ -1,40 +1,54 @@
-import { sql } from "bun";
+import postgres from "postgres"; // 必须使用这个库来连接 Render Postgres
 import { randomUUID } from "crypto";
-import { mkdirSync } from "fs";
+import { mkdirSync, unlinkSync } from "fs";
 
 try { mkdirSync("./uploads", { recursive: true }); } catch (e) {}
 
 import indexHtml from "./index.html";
 import profileHtml from "./profile.html";
 
-// 建表（已存在则跳过）
-await sql`
-  CREATE TABLE IF NOT EXISTS profiles (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    avatar TEXT,
-    created_at BIGINT DEFAULT extract(epoch from now())
-  )
-`;
+// 🌟 连接到 Render 的 Postgres 数据库
+const sql = postgres(process.env.DATABASE_URL!, {
+  ssl: "require",
+});
 
-await sql`
-  CREATE TABLE IF NOT EXISTS photos (
-    id TEXT PRIMARY KEY,
-    profile_id TEXT REFERENCES profiles(id),
-    path TEXT NOT NULL,
-    caption TEXT DEFAULT '',
-    created_at BIGINT DEFAULT extract(epoch from now())
-  )
-`;
+// 🌟 初始化表 (使用 Postgres 语法)
+async function initDB() {
+  // 个人资料表：加入了 x, y 坐标
+  await sql`
+    CREATE TABLE IF NOT EXISTS profiles (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      avatar TEXT,
+      x REAL DEFAULT 50,
+      y REAL DEFAULT 50,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
 
-await sql`
-  CREATE TABLE IF NOT EXISTS profile_tags (
-    profile_id TEXT REFERENCES profiles(id),
-    tag TEXT NOT NULL
-  )
-`;
+  // 照片表
+  await sql`
+    CREATE TABLE IF NOT EXISTS photos (
+      id TEXT PRIMARY KEY,
+      profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      caption TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
 
-async function getProfilesWithTags(rows: any[]): Promise<any[]> {
+  // 标签表
+  await sql`
+    CREATE TABLE IF NOT EXISTS profile_tags (
+      profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
+      tag TEXT NOT NULL
+    )
+  `;
+}
+initDB();
+
+// 辅助函数：获取带标签的用户数据
+async function getProfilesWithTags(rows: any[]) {
   return Promise.all(
     rows.map(async (p) => {
       const tags = await sql`SELECT tag FROM profile_tags WHERE profile_id = ${p.id}`;
@@ -61,10 +75,12 @@ Bun.serve({
         const avatarFile = formData.get("avatar") as File | null;
         const tagsRaw = formData.get("tags") as string | null;
         const tags: string[] = tagsRaw ? JSON.parse(tagsRaw) : [];
+        
+        // 🌟 找回坐标数据！
+        const x = parseFloat((formData.get("x") as string) || "50");
+        const y = parseFloat((formData.get("y") as string) || "50");
 
-        if (!name?.trim()) {
-          return Response.json({ error: "Name is required" }, { status: 400 });
-        }
+        if (!name?.trim()) return Response.json({ error: "Name is required" }, { status: 400 });
 
         const id = randomUUID();
         let avatarPath: string | null = null;
@@ -76,68 +92,68 @@ Bun.serve({
           avatarPath = `/uploads/${filename}`;
         }
 
-        await sql`INSERT INTO profiles (id, name, avatar) VALUES (${id}, ${name.trim()}, ${avatarPath})`;
+        // 写入主表 (包含坐标)
+        await sql`INSERT INTO profiles (id, name, avatar, x, y) VALUES (${id}, ${name.trim()}, ${avatarPath}, ${x}, ${y})`;
 
+        // 写入标签
         for (const tag of tags) {
           if (tag.trim()) {
             await sql`INSERT INTO profile_tags (profile_id, tag) VALUES (${id}, ${tag.trim().toLowerCase()})`;
           }
         }
 
-        return Response.json({ id, name: name.trim(), avatar: avatarPath, tags });
+        return Response.json({ id, name: name.trim(), avatar: avatarPath, tags, x, y });
       },
     },
 
-    "/api/profiles/search": {
+    // 🌟 雷达搜索接口：找回坐标匹配逻辑
+    "/api/profiles/nearby": {
       GET: async (req) => {
         const url = new URL(req.url);
-        const tag = url.searchParams.get("tag")?.trim().toLowerCase();
-        if (!tag) return Response.json([]);
+        const targetX = parseFloat(url.searchParams.get("x") || "50");
+        const targetY = parseFloat(url.searchParams.get("y") || "50");
 
-        const profiles = await sql`
-          SELECT DISTINCT p.* FROM profiles p
-          JOIN profile_tags pt ON p.id = pt.profile_id
-          WHERE pt.tag = ${tag}
-          ORDER BY p.created_at DESC
-        `;
-        return Response.json(await getProfilesWithTags(profiles));
-      },
+        const allProfiles = await sql`SELECT * FROM profiles`;
+
+        const profilesWithDistance = allProfiles.map((p: any) => {
+          const d2 = Math.pow(p.x - targetX, 2) + Math.pow(p.y - targetY, 2);
+          return { ...p, distance: d2 };
+        });
+
+        const closest = profilesWithDistance
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 10);
+
+        return Response.json(await getProfilesWithTags(closest));
+      }
     },
 
     "/api/profiles/:id": {
       GET: async (req) => {
         const rows = await sql`SELECT * FROM profiles WHERE id = ${req.params.id}`;
-        const profile = rows[0];
-        if (!profile) return Response.json({ error: "Not found" }, { status: 404 });
-
+        if (!rows[0]) return Response.json({ error: "Not found" }, { status: 404 });
         const photos = await sql`SELECT * FROM photos WHERE profile_id = ${req.params.id} ORDER BY created_at DESC`;
-        const tagRows = await sql`SELECT tag FROM profile_tags WHERE profile_id = ${req.params.id}`;
-
-        return Response.json({ ...profile, photos, tags: tagRows.map((r: any) => r.tag) });
+        const tags = await sql`SELECT tag FROM profile_tags WHERE profile_id = ${req.params.id}`;
+        return Response.json({ ...rows[0], photos, tags: tags.map(r => r.tag) });
       },
+      // 🌟 顺便把删除功能也加上
+      DELETE: async (req) => {
+        await sql`DELETE FROM profiles WHERE id = ${req.params.id}`;
+        return Response.json({ success: true });
+      }
     },
 
     "/api/profiles/:id/upload": {
       POST: async (req) => {
-        const rows = await sql`SELECT * FROM profiles WHERE id = ${req.params.id}`;
-        if (!rows[0]) return Response.json({ error: "Not found" }, { status: 404 });
-
+        const photoId = randomUUID();
         const formData = await req.formData();
         const file = formData.get("photo") as File;
         const caption = (formData.get("caption") as string) || "";
-
-        if (!file || file.size === 0) {
-          return Response.json({ error: "No file provided" }, { status: 400 });
-        }
-
-        const photoId = randomUUID();
         const ext = file.name.split(".").pop();
         const filename = `${photoId}.${ext}`;
         await Bun.write(`./uploads/${filename}`, file);
-
         const path = `/uploads/${filename}`;
         await sql`INSERT INTO photos (id, profile_id, path, caption) VALUES (${photoId}, ${req.params.id}, ${path}, ${caption})`;
-
         return Response.json({ id: photoId, path, caption });
       },
     },
