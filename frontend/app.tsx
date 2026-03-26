@@ -119,25 +119,45 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   const [preview, setPreview] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // 🌟 新增：坐标状态 (默认为中心点 50, 50)
+  const [vibe, setVibe] = useState({ x: 50, y: 50 });
+  
   const fileRef = useRef<HTMLInputElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) { setAvatar(f); setPreview(URL.createObjectURL(f)); }
   };
 
+  // 🌟 新增：处理地图点击
+  const handleMapClick = (e: React.MouseEvent) => {
+    if (!mapRef.current) return;
+    const rect = mapRef.current.getBoundingClientRect();
+    
+    // 计算百分比坐标 (0-100)
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setVibe({ 
+      x: Math.max(0, Math.min(100, x)), 
+      y: Math.max(0, Math.min(100, y)) 
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setLoading(true);
+    
     const fd = new FormData();
     fd.append("name", name.trim());
     fd.append("tags", JSON.stringify(tags));
     
-    // 🌟 重要：因为后端现在要求 x,y 坐标，我们先传随机值模拟坐标
-    // 以后你可以把它换成地图点选的真实坐标
-    fd.append("x", (Math.random() * 100).toString());
-    fd.append("y", (Math.random() * 100).toString());
+    // 🌟 传送真实的点击坐标
+    fd.append("x", vibe.x.toString());
+    fd.append("y", vibe.y.toString());
 
     if (avatar) fd.append("avatar", avatar);
     try {
@@ -152,19 +172,42 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
-        <h2>Create Profile</h2>
-        <div className="avatar-picker">
-          <div className="avatar-hex-preview" onClick={() => fileRef.current?.click()}>
-            {preview ? <img src={preview} alt="preview" /> : <div className="hex-initial">+</div>}
-          </div>
-          <span className="avatar-hint">Click to add a photo</span>
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
-        </div>
+        <h2>定位你的灵魂</h2>
+
         <form onSubmit={handleSubmit}>
-          <input className="field" type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
+          {/* 1. 头像选择 */}
+          <div className="avatar-picker">
+            <div className="avatar-hex-preview" onClick={() => fileRef.current?.click()}>
+              {preview ? <img src={preview} alt="preview" /> : <div className="hex-initial">+</div>}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
+          </div>
+
+          <input 
+            className="field" 
+            type="text" 
+            placeholder="你的名字" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            required 
+          />
+
+          {/* 2. 🌟 灵魂地图 (坐标选择器) */}
+          <div style={{ marginBottom: 8, fontSize: '0.85rem', color: 'var(--text-dim)' }}>
+            在星图中点击你的位置 (Vibe: {vibe.x.toFixed(0)}, {vibe.y.toFixed(0)})
+          </div>
+          <div className="soul-map" ref={mapRef} onClick={handleMapClick}>
+            <div 
+              className="soul-marker" 
+              style={{ left: `${vibe.x}%`, top: `${vibe.y}%` }} 
+            />
+            <span className="map-hint">点击任意处设定坐标</span>
+          </div>
+
           <TagInput tags={tags} onChange={setTags} />
+
           <button className="btn-primary" style={{ width: "100%" }} disabled={loading}>
-            {loading ? "Creating…" : "Create Profile"}
+            {loading ? "正在同步宇宙坐标..." : "创建我的 Profile"}
           </button>
         </form>
       </div>
