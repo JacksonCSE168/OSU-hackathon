@@ -13,6 +13,7 @@ interface ProfileData {
   name: string;
   avatar: string | null;
   photos: Photo[];
+  tags: string[];
 }
 
 function UploadModal({
@@ -169,6 +170,22 @@ function ProfilePage() {
             ? "No photos yet"
             : `${profile.photos.length} photo${profile.photos.length !== 1 ? "s" : ""}`}
         </span>
+        {profile.tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 480 }}>
+            {profile.tags.map((tag) => (
+              <a key={tag} href={`/?tag=${encodeURIComponent(tag)}`} style={{
+                background: "rgba(24,119,242,0.15)",
+                border: "1px solid rgba(24,119,242,0.35)",
+                color: "var(--blue-light)",
+                borderRadius: 20,
+                padding: "2px 10px",
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}>#{tag}</a>
+            ))}
+          </div>
+        )}
       </div>
 
       {profile.photos.length === 0 ? (

@@ -89,10 +89,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
 }
 .hive-row:first-child { margin-top: 0; }
 
-.hive-row--offset {
-  /* 偏移行向右移半个hex宽度（含gap），形成蜂窝错位 */
-  transform: translateX(calc((var(--hex-size) + var(--hex-gap)) / 2));
-}
+/* 4格居中后天然与5格居中错开半格，无需额外偏移 */
 
 /* ─── Hex cell ──────────────────────────────────────────────────── */
 .hex-wrap {
