@@ -1,4 +1,4 @@
-import postgres from "postgres"; // 必须使用这个库来连接 Render Postgres
+import postgres from "postgres"; 
 import { randomUUID } from "crypto";
 import { mkdirSync, unlinkSync } from "fs";
 
@@ -14,7 +14,6 @@ const sql = postgres(process.env.DATABASE_URL!, {
 
 // 🌟 初始化表 (使用 Postgres 语法)
 async function initDB() {
-  // 🚩 注意：如果你已经确认表结构正确，可以删掉这三行 DROP，否则每次重启数据都会丢
   await sql`DROP TABLE IF EXISTS profile_tags CASCADE`;
   await sql`DROP TABLE IF EXISTS photos CASCADE`;
   await sql`DROP TABLE IF EXISTS profiles CASCADE`;
@@ -116,7 +115,6 @@ async function startServer() {
         },
       },
 
-      // 🌟 新增：Tag 搜索接口 (修复搜不到 cat 的问题)
       "/api/profiles/search": {
         GET: async (req) => {
           const url = new URL(req.url);
@@ -130,20 +128,4 @@ async function startServer() {
           try {
             const profiles = await sql`
               SELECT DISTINCT p.* FROM profiles p
-              JOIN profile_tags pt ON p.id = pt.profile_id
-              WHERE pt.tag = ${tag}
-              ORDER BY p.created_at DESC
-            `;
-            return Response.json(await getProfilesWithTags(profiles));
-          } catch (err) {
-            console.error("搜索报错:", err);
-            return Response.json([]);
-          }
-        }
-      },
-
-      "/api/profiles/nearby": {
-        GET: async (req) => {
-          try {
-            const url = new URL(req.url);
-            const targetX = parseFloat(url.searchParams.get("x") || "
+              JOIN profile_tags pt ON p.id = pt.profile
