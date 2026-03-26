@@ -1,5 +1,9 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "crypto";
+import { mkdirSync } from "fs";
+
+try { mkdirSync("./uploads", { recursive: true }); } catch (e) {}
+
 import indexHtml from "./index.html";
 import profileHtml from "./profile.html";
 
@@ -26,7 +30,7 @@ db.run(`
 `);
 
 Bun.serve({
-  port: 3000,
+  port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   hostname: "0.0.0.0",
   routes: {
     "/": indexHtml,
@@ -128,4 +132,4 @@ Bun.serve({
   },
 });
 
-console.log("Faceboook 2.0 running at http://localhost:3000");
+console.log(`Faceboook 2.0 running on port ${process.env.PORT || 3000}`);

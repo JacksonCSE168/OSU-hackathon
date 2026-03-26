@@ -84,19 +84,22 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
 .hive-row {
   display: flex;
   justify-content: center;
-  margin-top: calc(var(--hex-h) * -0.265);
+  /* 正确的蜂窝间距：行中心距 = hex高度 × 0.75，所以负margin = hex高度 × 0.25 */
+  margin-top: calc(var(--hex-h) * -0.25);
 }
 .hive-row:first-child { margin-top: 0; }
 
 .hive-row--offset {
-  transform: translateX(calc(var(--hex-size) / 2 + var(--hex-gap) / 2));
+  /* 偏移行向右移半个hex宽度（含gap），形成蜂窝错位 */
+  transform: translateX(calc((var(--hex-size) + var(--hex-gap)) / 2));
 }
 
 /* ─── Hex cell ──────────────────────────────────────────────────── */
 .hex-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: relative;
+  /* 固定尺寸只包含hex本身，不包含文字，保证蜂窝几何正确 */
+  width: var(--hex-size);
+  height: var(--hex-h);
   margin: 0 calc(var(--hex-gap) / 2);
   cursor: pointer;
   text-decoration: none;
@@ -136,18 +139,26 @@ html, body { height: 100%; background: var(--bg); color: var(--text); }
 }
 
 .hex-name {
-  margin-top: 10px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-dim);
+  /* absolute overlay，居中显示在hex上，hover时出现 */
+  position: absolute;
+  bottom: 18%;
+  left: 0;
+  right: 0;
   text-align: center;
-  max-width: var(--hex-size);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.2s;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 5;
 }
-.hex-wrap:hover .hex-name { color: var(--text); }
+.hex-wrap:hover .hex-name { opacity: 1; }
 
 /* Add-new hex */
 .hex-add .hex {
