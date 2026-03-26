@@ -106,7 +106,8 @@ async function startServer() {
         },
       },
 
-      "/api/profiles/search": {
+      // 🌟 这里是终极修复点：把 /api/profiles/search 改成了 /api/search
+      "/api/search": {
         GET: async (req) => {
           const url = new URL(req.url);
           const tag = url.searchParams.get("tag")?.trim().toLowerCase();
