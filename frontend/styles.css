@@ -323,3 +323,70 @@ html, body { height: 100%; background: var(--bg); color: var(--text); overflow-x
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ─── 🌟 灵魂雷达扫描动画 ─────────────────────────────────────── */
+.radar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+}
+
+.radar-screen {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 2px solid var(--blue-glow);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px var(--blue-glow), inset 0 0 40px var(--blue-glow);
+  margin-bottom: 24px;
+}
+
+/* 雷达十字准星 */
+.radar-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(0, 207, 255, 0.4) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(0, 207, 255, 0.4) 50%, transparent 51%);
+  border-radius: 50%;
+}
+
+/* 旋转的扫描扇形 */
+.radar-sweep {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  background: linear-gradient(45deg, rgba(0, 207, 255, 0.8) 0%, transparent 60%);
+  transform-origin: 0% 100%;
+  animation: scan 1.2s linear infinite;
+}
+
+@keyframes scan {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 闪烁的提示文字 */
+.radar-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  animation: pulse-text 1s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--cyan); }
+  50% { opacity: 0.4; }
+}
