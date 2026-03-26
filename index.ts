@@ -114,22 +114,32 @@ Bun.serve({
     // 🌟 雷达搜索接口：找回坐标匹配逻辑
     "/api/profiles/nearby": {
       GET: async (req) => {
-        const url = new URL(req.url);
-        const targetX = parseFloat(url.searchParams.get("x") || "50");
-        const targetY = parseFloat(url.searchParams.get("y") || "50");
+        try {
+          const url = new URL(req.url);
+          const targetX = parseFloat(url.searchParams.get("x") || "50");
+          const targetY = parseFloat(url.searchParams.get("y") || "50");
 
-        const allProfiles = await sql`SELECT * FROM profiles`;
+          // 🌟 核心检查：如果查询失败，会跳到 catch
+          const allProfiles = await sql`SELECT * FROM profiles`;
 
-        const profilesWithDistance = allProfiles.map((p: any) => {
-          const d2 = Math.pow(p.x - targetX, 2) + Math.pow(p.y - targetY, 2);
-          return { ...p, distance: d2 };
-        });
+          // 确保 allProfiles 是数组
+          if (!allProfiles || !Array.isArray(allProfiles)) return Response.json([]);
 
-        const closest = profilesWithDistance
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 10);
+          const profilesWithDistance = allProfiles.map((p: any) => {
+            const d2 = Math.pow(p.x - targetX, 2) + Math.pow(p.y - targetY, 2);
+            return { ...p, distance: d2 };
+          });
 
-        return Response.json(await getProfilesWithTags(closest));
+          const closest = profilesWithDistance
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 10);
+
+          return Response.json(await getProfilesWithTags(closest));
+        } catch (err) {
+          console.error("搜索失败:", err);
+          // 🌟 万一崩了，给前端回个空数组，别让前端报错
+          return Response.json([]); 
+        }
       }
     },
 
