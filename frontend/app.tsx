@@ -101,7 +101,7 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
         className="field"
         style={{ marginBottom: 0 }}
         type="text"
-        placeholder="输入 tag，按 Enter 添加"
+        placeholder="Add a tag, press Enter"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKey}
@@ -163,7 +163,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="modal-close" onClick={onClose}>×</button>
-        <h2>定位你的灵魂</h2>
+        <h2>Find Your Soul</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="avatar-picker">
@@ -176,27 +176,27 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
           <input 
             className="field" 
             type="text" 
-            placeholder="你的名字" 
+            placeholder="Your name"
             value={name} 
             onChange={(e) => setName(e.target.value)} 
             required 
           />
 
           <div style={{ marginBottom: 8, fontSize: '0.85rem', color: 'var(--text-dim)' }}>
-            在星图中点击你的位置 (Vibe: {vibe.x.toFixed(0)}, {vibe.y.toFixed(0)})
+            Click your position on the soul map (Vibe: {vibe.x.toFixed(0)}, {vibe.y.toFixed(0)})
           </div>
           <div className="soul-map" ref={mapRef} onClick={handleMapClick}>
             <div 
               className="soul-marker" 
               style={{ left: `${vibe.x}%`, top: `${vibe.y}%` }} 
             />
-            <span className="map-hint">点击任意处设定坐标</span>
+            <span className="map-hint">Click anywhere to set coordinates</span>
           </div>
 
           <TagInput tags={tags} onChange={setTags} />
 
           <button type="submit" className="btn-primary" style={{ width: "100%" }} disabled={loading}>
-            {loading ? "正在同步宇宙坐标..." : "创建我的 Profile"}
+            {loading ? "Creating..." : "Create My Profile"}
           </button>
         </form>
       </div>
@@ -231,7 +231,7 @@ function App() {
 
     try {
       const res = await fetch(`/api/search?tag=${encodeURIComponent(t)}`);
-      if (!res.ok) throw new Error("搜索请求失败");
+      if (!res.ok) throw new Error("Search request failed");
       const data = await res.json();
       
       setTimeout(() => {
@@ -265,7 +265,7 @@ function App() {
         <input
           className="field"
           style={{ maxWidth: 320, marginBottom: 0 }}
-          placeholder="搜索 tag (例如 music)"
+          placeholder="Search tag (e.g. music)"
           value={searchTag}
           onChange={(e) => {
             setSearchTag(e.target.value);
@@ -273,7 +273,7 @@ function App() {
           }}
           onKeyDown={(e) => e.key === "Enter" && searchByTag(searchTag)}
         />
-        <button type="button" className="btn-primary" onClick={() => searchByTag(searchTag)}>搜索</button>
+        <button type="button" className="btn-primary" onClick={() => searchByTag(searchTag)}>Search</button>
       </div>
 
       <main className="hive">
